@@ -164,6 +164,7 @@ namespace UnityStandardAssets.Characters.FirstPerson
             }*/
             Vector3 desiredMove = cam.transform.forward * input.y + cam.transform.right * input.x;
             desiredMove = Vector3.ProjectOnPlane(desiredMove, transform.up).normalized;
+
             if (m_IsGrounded)
             {
                 
@@ -329,18 +330,20 @@ namespace UnityStandardAssets.Characters.FirstPerson
                 
                 if (angle < 45) { 
                     m_IsGrounded = true;
+                    m_GroundContactNormal = hitInfo.normal;
                 }
                 else
                 {
                     //Debug.Log("Angle of normal: " + angle);
                     m_IsGrounded = false;
+                    m_GroundContactNormal = Vector3.up;
                 }
 
             }
             else
                 m_IsGrounded = false;
             
-            
+
             /*if (Physics.Raycast(transform.position, -transform.up, (m_Capsule.height / 2f) + 0.1f))
                 m_IsGrounded = true;
             else
