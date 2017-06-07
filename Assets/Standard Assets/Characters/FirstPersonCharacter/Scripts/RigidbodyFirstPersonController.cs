@@ -315,11 +315,36 @@ namespace UnityStandardAssets.Characters.FirstPerson
              {
                  m_Jumping = false;
              }*/
+            RaycastHit hitInfo;
 
-            if (Physics.Raycast(transform.position, -transform.up, (m_Capsule.height / 2f) + 0.1f))
-                m_IsGrounded = true;
+            if (Physics.BoxCast(transform.position, new Vector3(0.16f, 0.1f, 0.16f), -transform.up, out hitInfo, transform.rotation, 0.36f, Physics.AllLayers, QueryTriggerInteraction.Ignore))
+            {
+                //m_IsGrounded = true;
+                
+                //Vector3 temp = transform.position;
+                //temp.y -= 0.36f;
+                Debug.DrawRay(transform.position, hitInfo.normal, Color.blue);
+                // Debug.DrawLine(transform.position, transform.position + hitInfo.normal, Color.blue); //show normal of surface coming out of character
+                float angle = Vector3.Angle(transform.up, hitInfo.normal);
+                
+                if (angle < 45) { 
+                    m_IsGrounded = true;
+                }
+                else
+                {
+                    //Debug.Log("Angle of normal: " + angle);
+                    m_IsGrounded = false;
+                }
+
+            }
             else
                 m_IsGrounded = false;
+            
+            
+            /*if (Physics.Raycast(transform.position, -transform.up, (m_Capsule.height / 2f) + 0.1f))
+                m_IsGrounded = true;
+            else
+                m_IsGrounded = false;*/
         }
     }
 }
