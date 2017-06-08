@@ -5,27 +5,27 @@ using UnityStandardAssets.CrossPlatformInput;
 namespace UnityStandardAssets.Characters.FirstPerson
 {
     [RequireComponent(typeof (Rigidbody))]
-    [RequireComponent(typeof (CapsuleCollider))]
+    [RequireComponent(typeof (BoxCollider))]
     public class RigidbodyFirstPersonController : MonoBehaviour
     {
         [Serializable]
         public class MovementSettings
         {
-            public float ForwardSpeed = 8.0f;   // Speed when walking forward
-            public float BackwardSpeed = 4.0f;  // Speed when walking backwards
-            public float StrafeSpeed = 4.0f;    // Speed when walking sideways
-            public float RunMultiplier = 2.0f;   // Speed when sprinting
+            //public float ForwardSpeed = 8.0f;   // Speed when walking forward
+            //public float BackwardSpeed = 4.0f;  // Speed when walking backwards
+            //public float StrafeSpeed = 4.0f;    // Speed when walking sideways
+            //public float RunMultiplier = 2.0f;   // Speed when sprinting
             
-            public KeyCode RunKey = KeyCode.LeftShift;
-            public float JumpForce = 30f;
-            public AnimationCurve SlopeCurveModifier = new AnimationCurve(new Keyframe(-90.0f, 1.0f), new Keyframe(0.0f, 1.0f), new Keyframe(90.0f, 0.0f));
-            [HideInInspector] public float CurrentTargetSpeed = 8f;
-
+            //public KeyCode RunKey = KeyCode.LeftShift;
+            public float JumpForce = 32f;
+            //public AnimationCurve SlopeCurveModifier = new AnimationCurve(new Keyframe(-90.0f, 1.0f), new Keyframe(0.0f, 1.0f), new Keyframe(90.0f, 0.0f));
+            //[HideInInspector] public float CurrentTargetSpeed = 8f;
+/*
 #if !MOBILE_INPUT
             private bool m_Running;
-#endif
+#endif*/
 
-            public void UpdateDesiredTargetSpeed(Vector2 input)
+            /*public void UpdateDesiredTargetSpeed(Vector2 input)
             {
 	            if (input == Vector2.zero) return;
 				if (input.x > 0 || input.x < 0)
@@ -55,14 +55,14 @@ namespace UnityStandardAssets.Characters.FirstPerson
 		            m_Running = false;
 	            }
 #endif
-            }
+            }*/
 
-#if !MOBILE_INPUT
+/*#if !MOBILE_INPUT
             public bool Running
             {
                 get { return m_Running; }
             }
-#endif
+#endif*/
         }
 
 
@@ -70,11 +70,18 @@ namespace UnityStandardAssets.Characters.FirstPerson
         public class AdvancedSettings
         {
             public float groundCheckDistance = 0.01f; // distance for checking if the controller is grounded ( 0.01f seems to work best for this )
-            public float stickToGroundHelperDistance = 0.5f; // stops the character
-            public float slowDownRate = 20f; // rate at which the controller comes to a stop when there is no input
-            public bool airControl; // can the user control the direction that is being moved in the air
-            [Tooltip("set it to 0.1 or more if you get stuck in wall")]
-            public float shellOffset; //reduce the radius by that ratio to avoid getting stuck in wall (a value of 0.1f is nice)
+            //public float stickToGroundHelperDistance = 0.5f; // stops the character
+            //public float slowDownRate = 20f; // rate at which the controller comes to a stop when there is no input
+            //public bool airControl; // can the user control the direction that is being moved in the air
+            //[Tooltip("set it to 0.1 or more if you get stuck in wall")]
+            //public float shellOffset; //reduce the radius by that ratio to avoid getting stuck in wall (a value of 0.1f is nice)
+
+            //Default values: 8, 50, 2.5, 600, 0.72
+            public float friction; //The friction the character experiences when grounded
+            public float ground_accelerate; //The acceleration a grounded character can have
+            public float max_velocity_ground; //The max velocity a grounded character can achieve by walking
+            public float air_accelerate; //The Acceleration a character in the air can have
+            public float max_velocity_air; //The max velocity a grounded character can achieve in the air
         }
 
 
@@ -89,7 +96,6 @@ namespace UnityStandardAssets.Characters.FirstPerson
         private float m_YRotation;
         private Vector3 m_GroundContactNormal;
         private bool m_Jump, m_PreviouslyGrounded, m_Jumping, m_IsGrounded;
-        public float friction, ground_accelerate, max_velocity_ground, air_accelerate, max_velocity_air;
 
         public Vector3 Velocity
         {
@@ -106,7 +112,7 @@ namespace UnityStandardAssets.Characters.FirstPerson
             get { return m_Jumping; }
         }
 
-        public bool Running
+        /*public bool Running
         {
             get
             {
@@ -116,7 +122,7 @@ namespace UnityStandardAssets.Characters.FirstPerson
 	            return false;
 #endif
             }
-        }
+        }*/
 
 
         private void Start()
@@ -193,7 +199,7 @@ namespace UnityStandardAssets.Characters.FirstPerson
 
                 if (m_PreviouslyGrounded && !m_Jumping)
                 {
-                    StickToGroundHelper();
+                    //StickToGroundHelper();
                 }
             }
             m_Jump = false;
@@ -229,28 +235,28 @@ namespace UnityStandardAssets.Characters.FirstPerson
             
             if (speed != 0) // To avoid divide by zero errors
             {
-                float drop = speed * friction * Time.fixedDeltaTime;
+                float drop = speed * advancedSettings.friction * Time.fixedDeltaTime;
                 prevVelocity *= Mathf.Max(speed - drop, 0) / speed; // Scale the velocity based on friction.
             }
             
             // ground_accelerate and max_velocity_ground are server-defined movement variables
-            return Accelerate(accelDir, prevVelocity, ground_accelerate, max_velocity_ground);
+            return Accelerate(accelDir, prevVelocity, advancedSettings.ground_accelerate, advancedSettings.max_velocity_ground);
         }
 
         private Vector3 MoveAir(Vector3 accelDir, Vector3 prevVelocity)
         {
             // air_accelerate and max_velocity_air are server-defined movement variables
-            return Accelerate(accelDir, prevVelocity, air_accelerate, max_velocity_air);
+            return Accelerate(accelDir, prevVelocity, advancedSettings.air_accelerate, advancedSettings.max_velocity_air);
         }
 
-        private float SlopeMultiplier()
+        /*private float SlopeMultiplier()
         {
             float angle = Vector3.Angle(m_GroundContactNormal, Vector3.up);
             return movementSettings.SlopeCurveModifier.Evaluate(angle);
-        }
+        }*/
 
 
-        private void StickToGroundHelper()
+        /*private void StickToGroundHelper()
         {
             RaycastHit hitInfo;
             if (Physics.SphereCast(transform.position, m_Capsule.radius * (1.0f - advancedSettings.shellOffset), Vector3.down, out hitInfo,
@@ -262,7 +268,7 @@ namespace UnityStandardAssets.Characters.FirstPerson
                     m_RigidBody.velocity = Vector3.ProjectOnPlane(m_RigidBody.velocity, hitInfo.normal);
                 }
             }
-        }
+        }*/
 
 
         private Vector2 GetInput()
@@ -273,7 +279,7 @@ namespace UnityStandardAssets.Characters.FirstPerson
                     x = CrossPlatformInputManager.GetAxis("Horizontal"),
                     y = CrossPlatformInputManager.GetAxis("Vertical")
                 };
-			movementSettings.UpdateDesiredTargetSpeed(input);
+			//movementSettings.UpdateDesiredTargetSpeed(input);
             return input;
         }
 
@@ -288,7 +294,7 @@ namespace UnityStandardAssets.Characters.FirstPerson
 
             mouseLook.LookRotation (transform, cam.transform);
 
-            if (m_IsGrounded || advancedSettings.airControl)
+            if (m_IsGrounded/* || advancedSettings.airControl*/)
             {
                 // Rotate the rigidbody velocity to match the new direction that the character is looking
                 Quaternion velRotation = Quaternion.AngleAxis(transform.eulerAngles.y - oldYRotation, Vector3.up);
@@ -318,7 +324,7 @@ namespace UnityStandardAssets.Characters.FirstPerson
              }*/
             RaycastHit hitInfo;
 
-            if (Physics.BoxCast(transform.position, new Vector3(0.16f, 0.1f, 0.16f), -transform.up, out hitInfo, transform.rotation, 0.36f, Physics.AllLayers, QueryTriggerInteraction.Ignore))
+            if (Physics.BoxCast(transform.position, new Vector3(0.16f, advancedSettings.groundCheckDistance, 0.16f), -transform.up, out hitInfo, transform.rotation, 0.36f, Physics.AllLayers, QueryTriggerInteraction.Ignore))
             {
                 //m_IsGrounded = true;
                 
