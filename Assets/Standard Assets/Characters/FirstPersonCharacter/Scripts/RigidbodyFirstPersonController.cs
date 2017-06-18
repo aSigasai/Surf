@@ -92,10 +92,11 @@ namespace UnityStandardAssets.Characters.FirstPerson
 
 
         private Rigidbody m_RigidBody;
-        private CapsuleCollider m_Capsule;
+        private BoxCollider m_Collider;
         private float m_YRotation;
         private Vector3 m_GroundContactNormal;
-        private bool m_Jump, m_PreviouslyGrounded, m_Jumping, m_IsGrounded;
+        private bool m_Jump, m_PreviouslyGrounded, m_Jumping;
+        public bool m_IsGrounded;
 
         public Vector3 Velocity
         {
@@ -128,7 +129,7 @@ namespace UnityStandardAssets.Characters.FirstPerson
         private void Start()
         {
             m_RigidBody = GetComponent<Rigidbody>();
-            m_Capsule = GetComponent<CapsuleCollider>();
+            m_Collider = GetComponent<BoxCollider>();
             mouseLook.Init (transform, cam.transform);
         }
 
@@ -170,7 +171,7 @@ namespace UnityStandardAssets.Characters.FirstPerson
             }*/
             Vector3 desiredMove = cam.transform.forward * input.y + cam.transform.right * input.x;
             desiredMove = Vector3.ProjectOnPlane(desiredMove, transform.up).normalized;
-
+            
             if (m_IsGrounded)
             {
                 
@@ -322,14 +323,19 @@ namespace UnityStandardAssets.Characters.FirstPerson
              {
                  m_Jumping = false;
              }*/
+
+            m_PreviouslyGrounded = m_IsGrounded;
             RaycastHit hitInfo;
 
-            if (Physics.BoxCast(transform.position, new Vector3(0.16f, advancedSettings.groundCheckDistance, 0.16f), -transform.up, out hitInfo, transform.rotation, 0.36f, Physics.AllLayers, QueryTriggerInteraction.Ignore))
+            if (Physics.BoxCast(transform.position, new Vector3(0.1595f, advancedSettings.groundCheckDistance, 0.1595f), Vector3.down, out hitInfo, transform.rotation, 0.36001f, Physics.AllLayers, QueryTriggerInteraction.Ignore))
             {
                 //m_IsGrounded = true;
-                
+
                 //Vector3 temp = transform.position;
                 //temp.y -= 0.36f;
+                Vector3 bottom = transform.position;
+                bottom.y -= 0.36f;
+                Debug.DrawLine(transform.position, bottom, Color.yellow);
                 Debug.DrawRay(transform.position, hitInfo.normal, Color.blue);
                 // Debug.DrawLine(transform.position, transform.position + hitInfo.normal, Color.blue); //show normal of surface coming out of character
                 float angle = Vector3.Angle(transform.up, hitInfo.normal);
@@ -337,23 +343,31 @@ namespace UnityStandardAssets.Characters.FirstPerson
                 if (angle < 45) { 
                     m_IsGrounded = true;
                     m_GroundContactNormal = hitInfo.normal;
+                    m_Collider.material.staticFriction = 0.2f;
+                    m_Jumping = false;
                 }
                 else
                 {
                     //Debug.Log("Angle of normal: " + angle);
                     m_IsGrounded = false;
                     m_GroundContactNormal = Vector3.up;
+                    m_Collider.material.staticFriction = 0.0f;
                 }
 
             }
-            else
+            else {
                 m_IsGrounded = false;
+                m_GroundContactNormal = Vector3.up;
+                m_Collider.material.staticFriction = 0.0f;
+            }
+                
+
             
 
-            /*if (Physics.Raycast(transform.position, -transform.up, (m_Capsule.height / 2f) + 0.1f))
-                m_IsGrounded = true;
-            else
-                m_IsGrounded = false;*/
+            //if (Physics.Raycast(transform.position, -transform.up, 0.36f + 0.1f))
+                //m_IsGrounded = true;
+            //else
+                //m_IsGrounded = false;
         }
     }
 }
